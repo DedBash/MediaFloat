@@ -1,7 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from version import __version__
-
 a = Analysis(
     ['main.py'],
     pathex=[],

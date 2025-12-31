@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         self.combo_tray_action.addItem("", "flyout")
         self.combo_tray_action.addItem("", "floating")
         self.combo_tray_action.currentIndexChanged.connect(self.save_settings)
-        self.settings_layout.addRow("Tray-Aktion:", self.combo_tray_action)
+        self.settings_layout.addRow("", self.combo_tray_action)
         
         self.settings_group.setLayout(self.settings_layout)
         layout.addWidget(self.settings_group)
