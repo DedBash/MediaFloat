@@ -1,0 +1,6 @@
+# Build/dev dependencies (not required at runtime)
+pyinstaller
+
+# Optional: improves per-app icons in the session picker.
+# If you want a smaller exe, leave this uninstalled.
+psutil
