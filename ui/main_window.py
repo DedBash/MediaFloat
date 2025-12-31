@@ -5,9 +5,16 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtGui import QAction, QColor, QCursor
 
+from version import __version__, __app_name__
 from .flyout import FlyoutWindow
 from .floating_bar import FloatingBar
 from .icons import get_app_icon
+from .styling import (
+    qss_main_window_label,
+    qss_main_window_button,
+    qss_main_window_button_primary,
+    qss_main_window_groupbox,
+)
 from utils.helpers import TRANSLATIONS, DEFAULT_LANGUAGE, get_text, is_autostart_enabled, toggle_autostart
 
 class MainWindow(QMainWindow):
@@ -31,25 +38,35 @@ class MainWindow(QMainWindow):
         
         self.label_main = QLabel()
         self.label_main.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label_main.setStyleSheet("font-size: 14px; font-weight: 600;")
+        self.label_main.setStyleSheet(qss_main_window_label())
         
         self.btn_minimize_tray = QPushButton()
         self.btn_minimize_tray.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_minimize_tray.clicked.connect(self.hide_to_tray)
+        self.btn_minimize_tray.setMinimumHeight(40)
+        self.btn_minimize_tray.setStyleSheet(qss_main_window_button())
         
         self.btn_floating_mode = QPushButton()
         self.btn_floating_mode.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_floating_mode.clicked.connect(self.activate_floating_mode)
+        self.btn_floating_mode.setMinimumHeight(40)
+        self.btn_floating_mode.setStyleSheet(qss_main_window_button_primary())
         
         layout.addWidget(self.label_main)
-        layout.addWidget(self.btn_minimize_tray)
+        layout.addSpacing(5)
         layout.addWidget(self.btn_floating_mode)
+        layout.addWidget(self.btn_minimize_tray)
+        layout.addSpacing(10)
         
         self.settings_group = QGroupBox()
+        self.settings_group.setStyleSheet(qss_main_window_groupbox())
         self.settings_layout = QFormLayout()
+        self.settings_layout.setVerticalSpacing(12)
+        self.settings_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         
         self.combo_language = QComboBox()
         self.combo_language.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.combo_language.setMinimumHeight(32)
         for lang_code, lang_data in TRANSLATIONS.items():
             display_name = lang_data.get("display_name", lang_code)
             self.combo_language.addItem(display_name, lang_code)
@@ -59,8 +76,10 @@ class MainWindow(QMainWindow):
         self.spin_size = QSpinBox()
         self.spin_size.setRange(20, 100)
         self.spin_size.setValue(30)
+        self.spin_size.setSuffix(" px")
+        self.spin_size.setMinimumHeight(32)
         self.spin_size.valueChanged.connect(lambda v: self.floating_bar.update_style(size=v))
-        self.settings_layout.addRow("Gr\u00f6ße (px):", self.spin_size)
+        self.settings_layout.addRow("Widget-Größe:", self.spin_size)
         
         self.check_autostart = QCheckBox()
         self.check_autostart.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -68,16 +87,34 @@ class MainWindow(QMainWindow):
         self.check_autostart.stateChanged.connect(self.toggle_autostart)
         self.settings_layout.addRow("Mit Windows starten:", self.check_autostart)
         
+        self.check_tray_notification = QCheckBox()
+        self.check_tray_notification.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.check_tray_notification.setChecked(False)
+        self.check_tray_notification.stateChanged.connect(self.save_settings)
+        self.settings_layout.addRow("Tray-Benachrichtigung:", self.check_tray_notification)
+        
         self.combo_tray_action = QComboBox()
         self.combo_tray_action.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.combo_tray_action.setMinimumHeight(32)
         self.combo_tray_action.addItem("", "window")
         self.combo_tray_action.addItem("", "flyout")
         self.combo_tray_action.addItem("", "floating")
         self.combo_tray_action.currentIndexChanged.connect(self.save_settings)
-        self.settings_layout.addRow("Tray-Klick:", self.combo_tray_action)
+        self.settings_layout.addRow("Tray-Aktion:", self.combo_tray_action)
         
         self.settings_group.setLayout(self.settings_layout)
         layout.addWidget(self.settings_group)
+        
+        # Version Label
+        self.label_version = QLabel(f"{__app_name__} v{__version__}")
+        self.label_version.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label_version.setStyleSheet("""
+            font-size: 11px;
+            color: rgba(255, 255, 255, 100);
+            padding: 5px;
+        """)
+        layout.addStretch()
+        layout.addWidget(self.label_version)
         
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(get_app_icon())
@@ -103,7 +140,7 @@ class MainWindow(QMainWindow):
         self.flyout.hide()
         self.floating_bar.hide()
         self.hide()
-        if show_message:
+        if show_message and self.check_tray_notification.isChecked():
             self.tray_icon.showMessage(
                 get_text("tray_info_title", self.current_language),
                 get_text("tray_info_msg", self.current_language),
@@ -124,6 +161,13 @@ class MainWindow(QMainWindow):
         self.btn_floating_mode.setText(get_text("btn_floating", lang))
         self.settings_group.setTitle(get_text("group_settings", lang))
         
+        # Tooltips setzen
+        self.combo_language.setToolTip(get_text("tooltip_language", lang))
+        self.spin_size.setToolTip(get_text("tooltip_widget_size", lang))
+        self.check_autostart.setToolTip(get_text("tooltip_autostart", lang))
+        self.check_tray_notification.setToolTip(get_text("tooltip_tray_notification", lang))
+        self.combo_tray_action.setToolTip(get_text("tooltip_tray_action", lang))
+        
         if self.settings_layout.labelForField(self.combo_language):
             self.settings_layout.labelForField(self.combo_language).setText(get_text("label_language", lang))
             
@@ -132,6 +176,9 @@ class MainWindow(QMainWindow):
             
         if self.settings_layout.labelForField(self.check_autostart):
             self.settings_layout.labelForField(self.check_autostart).setText(get_text("label_autostart", lang))
+        
+        if self.settings_layout.labelForField(self.check_tray_notification):
+            self.settings_layout.labelForField(self.check_tray_notification).setText(get_text("label_tray_notification", lang))
         
         if self.settings_layout.labelForField(self.combo_tray_action):
             self.settings_layout.labelForField(self.combo_tray_action).setText(get_text("label_tray_click", lang))
@@ -143,6 +190,7 @@ class MainWindow(QMainWindow):
         self.action_show.setText(get_text("tray_show", lang))
         self.action_quit.setText(get_text("tray_quit", lang))
         self.flyout.set_language(lang)
+        self.floating_bar.set_language(lang)
 
     def quit_app(self):
         self.save_settings()
@@ -175,6 +223,9 @@ class MainWindow(QMainWindow):
         if index >= 0:
             self.combo_tray_action.setCurrentIndex(index)
         
+        show_tray_notification = settings.value("show_tray_notification", False, type=bool)
+        self.check_tray_notification.setChecked(show_tray_notification)
+        
         ui_state = settings.value("ui_state", "")
         if not ui_state:
             mode = settings.value("mode", "normal")
@@ -201,6 +252,8 @@ class MainWindow(QMainWindow):
         tray_action = self.combo_tray_action.currentData()
         if tray_action:
             settings.setValue("tray_click_action", tray_action)
+        
+        settings.setValue("show_tray_notification", self.check_tray_notification.isChecked())
 
         if ui_state is None:
             if self.floating_bar.isVisible():

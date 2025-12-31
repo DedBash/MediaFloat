@@ -2,19 +2,22 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QLabel, QStyle)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from .icons import get_white_pixmap
+from .styling import qss_floating_bar_label
+from utils.helpers import get_text, DEFAULT_LANGUAGE
 
 class FloatingBar(QWidget):
     def __init__(self, flyout_window):
         super().__init__()
         self.flyout = flyout_window
+        self.lang_code = DEFAULT_LANGUAGE
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
         
-        self.current_size = 30
+        self.current_size = 50
         self.resize(self.current_size, self.current_size)
         screen = QApplication.primaryScreen().geometry()
-        self.move(screen.width() - 40, screen.height() // 2)
+        self.move(screen.width() - 60, screen.height() // 2)
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -44,18 +47,8 @@ class FloatingBar(QWidget):
             
         r, g, b, a = self.bg_color.red(), self.bg_color.green(), self.bg_color.blue(), self.bg_color.alpha()
         
-        style = f"""
-            QLabel {{
-                background-color: rgba({r}, {g}, {b}, {a});
-                border-radius: {self.border_radius}px;
-                border: 1px solid rgba(255, 255, 255, 30);
-            }}
-            QLabel:hover {{
-                background-color: rgba({r}, {g}, {b}, {min(255, a + 50)});
-                border: 1px solid rgba(255, 255, 255, 100);
-            }}
-        """
-        self.arrow_lbl.setStyleSheet(style)
+        self.arrow_lbl.setStyleSheet(qss_floating_bar_label(r, g, b, a, self.border_radius))
+        self.arrow_lbl.setToolTip(get_text("tooltip_floating_bar", self.lang_code))
         self.snap_to_edge()
 
     def enterEvent(self, event):
@@ -129,18 +122,23 @@ class FloatingBar(QWidget):
         if min_dist == dist_left:
             new_x = screen.left()
             self.edge = 'left'
-            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowRight, 16))
+            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowRight, 18))
         elif min_dist == dist_right:
             new_x = screen.right() - self.width()
             self.edge = 'right'
-            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowLeft, 16))
+            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowLeft, 18))
         elif min_dist == dist_top:
             new_y = screen.top()
             self.edge = 'top'
-            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowDown, 16))
+            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowDown, 18))
         else:
             new_y = screen.bottom() - self.height()
             self.edge = 'bottom'
-            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowUp, 16))
+            self.arrow_lbl.setPixmap(get_white_pixmap(QStyle.StandardPixmap.SP_ArrowUp, 18))
             
         self.move(new_x, new_y)
+
+    def set_language(self, lang_code):
+        if lang_code:
+            self.lang_code = lang_code
+            self.arrow_lbl.setToolTip(get_text("tooltip_floating_bar", self.lang_code))

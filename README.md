@@ -1,5 +1,8 @@
 # MediaFloat
 
+**Version:** 0.2.0  
+**Autor:** [DedBash](https://github.com/DedBash/MediaFloat)
+
 Windows Media Controller mit Floating Widget
 
 ## Features

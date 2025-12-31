@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QFrame, QStyle, QComboBox)
 from PyQt6.QtCore import Qt, QSize
-from .icons import get_white_icon, get_gear_icon, get_close_icon, get_session_app_icon
+from .icons import get_white_icon, get_gear_icon, get_close_icon, get_session_app_icon, get_dropdown_arrow_icon
 from utils.helpers import get_text, DEFAULT_LANGUAGE
 from .styling import (
     qss_flyout_chip_button,
@@ -9,6 +9,9 @@ from .styling import (
     qss_flyout_container,
     qss_flyout_info_card,
     qss_flyout_media_button,
+    qss_flyout_title_label,
+    qss_flyout_artist_label,
+    qss_combo_arrow_label,
 )
 
 class FlyoutWindow(QWidget):
@@ -34,17 +37,17 @@ class FlyoutWindow(QWidget):
         self.info_frame = QFrame()
         self.info_frame.setStyleSheet(qss_flyout_info_card())
         info_layout = QVBoxLayout(self.info_frame)
-        info_layout.setContentsMargins(12, 10, 12, 10)
-        info_layout.setSpacing(4)
+        info_layout.setContentsMargins(14, 12, 14, 12)
+        info_layout.setSpacing(6)
 
         self.label_title = QLabel("")
         self.label_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label_title.setStyleSheet("font-weight: 650; font-size: 16px; color: rgba(255, 255, 255, 235);")
+        self.label_title.setStyleSheet(qss_flyout_title_label())
         self.label_title.setWordWrap(True)
 
         self.label_artist = QLabel("")
         self.label_artist.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label_artist.setStyleSheet("font-size: 12px; color: rgba(255, 255, 255, 160);")
+        self.label_artist.setStyleSheet(qss_flyout_artist_label())
         self.label_artist.setWordWrap(True)
 
         info_layout.addWidget(self.label_title)
@@ -53,8 +56,9 @@ class FlyoutWindow(QWidget):
         container_layout.addWidget(self.info_frame)
         
         controls_layout = QHBoxLayout()
-        controls_layout.setContentsMargins(0, 4, 0, 0)
-        controls_layout.setSpacing(12)
+        controls_layout.setContentsMargins(0, 6, 0, 4)
+        controls_layout.setSpacing(14)
+        
         self.btn_prev = QPushButton()
         self.btn_prev.setIcon(get_white_icon(QStyle.StandardPixmap.SP_MediaSkipBackward))
         self.btn_prev.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -68,8 +72,8 @@ class FlyoutWindow(QWidget):
         self.btn_next.setCursor(Qt.CursorShape.PointingHandCursor)
         
         for btn in [self.btn_prev, self.btn_play, self.btn_next]:
-            btn.setFixedSize(52, 52)
-            btn.setIconSize(QSize(24, 24))
+            btn.setFixedSize(56, 56)
+            btn.setIconSize(QSize(26, 26))
             btn.setStyleSheet(qss_flyout_media_button())
         
         controls_layout.addWidget(self.btn_prev)
@@ -82,40 +86,48 @@ class FlyoutWindow(QWidget):
 
         container_layout.addLayout(controls_layout)
 
-        self.combo_sessions = QComboBox()
-        self.combo_sessions.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.combo_sessions.setIconSize(QSize(18, 18))
-        self.combo_sessions.setStyleSheet(qss_flyout_combo())
-        self.combo_sessions.currentIndexChanged.connect(self.on_session_changed)
-        self.combo_sessions.hide()
-        container_layout.addWidget(self.combo_sessions)
-
         utils_layout = QHBoxLayout()
-        utils_layout.setContentsMargins(0, 2, 0, 0)
+        utils_layout.setContentsMargins(0, 8, 0, 0)
         utils_layout.setSpacing(10)
 
         self.btn_settings = QPushButton()
         self.btn_settings.setIcon(get_gear_icon())
-        self.btn_settings.setFixedSize(40, 40)
-        self.btn_settings.setIconSize(QSize(18, 18))
+        self.btn_settings.setFixedSize(44, 44)
+        self.btn_settings.setIconSize(QSize(20, 20))
         self.btn_settings.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_settings.setStyleSheet(qss_flyout_chip_button())
 
+        self.combo_sessions = QComboBox()
+        self.combo_sessions.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.combo_sessions.setIconSize(QSize(20, 20))
+        self.combo_sessions.setFixedHeight(44)
+        self.combo_sessions.setStyleSheet(qss_flyout_combo())
+        self.combo_sessions.currentIndexChanged.connect(self.on_session_changed)
+        self.combo_sessions.hide()
+        
+        # Custom Dropdown-Pfeil als Overlay erstellen
+        self.arrow_label = QLabel("▼", self.combo_sessions)
+        self.arrow_label.setStyleSheet(qss_combo_arrow_label())
+        self.arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.arrow_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.arrow_label.setFixedSize(24, 44)
+        self.arrow_label.move(self.combo_sessions.width() - 24, 0)
+
         self.btn_hide = QPushButton()
         self.btn_hide.setIcon(get_close_icon())
-        self.btn_hide.setFixedSize(40, 40)
-        self.btn_hide.setIconSize(QSize(18, 18))
+        self.btn_hide.setFixedSize(44, 44)
+        self.btn_hide.setIconSize(QSize(20, 20))
         self.btn_hide.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_hide.setStyleSheet(self.btn_settings.styleSheet())
 
         utils_layout.addWidget(self.btn_settings)
-        utils_layout.addStretch()
+        utils_layout.addWidget(self.combo_sessions, 1)
         utils_layout.addWidget(self.btn_hide)
 
         container_layout.addLayout(utils_layout)
         
         self.layout.addWidget(self.container)
-        self.resize(280, 250)
+        self.resize(300, 270)
         
         self.media_worker.media_sessions_changed.connect(self.update_media_sessions)
 
@@ -127,8 +139,12 @@ class FlyoutWindow(QWidget):
             self.update_texts()
 
     def update_texts(self):
-        self.btn_settings.setToolTip(get_text("flyout_settings_tooltip", self.lang_code))
-        self.btn_hide.setToolTip(get_text("flyout_hide_tooltip", self.lang_code))
+        self.btn_prev.setToolTip(get_text("tooltip_prev", self.lang_code))
+        self.btn_play.setToolTip(get_text("tooltip_play_pause", self.lang_code))
+        self.btn_next.setToolTip(get_text("tooltip_next", self.lang_code))
+        self.combo_sessions.setToolTip(get_text("tooltip_session_combo", self.lang_code))
+        self.btn_settings.setToolTip(get_text("tooltip_settings_open", self.lang_code))
+        self.btn_hide.setToolTip(get_text("tooltip_minimize_tray", self.lang_code))
         if not self.label_title.text():
             self.label_title.setText(get_text("no_media", self.lang_code))
 
@@ -168,8 +184,12 @@ class FlyoutWindow(QWidget):
 
         if len(sessions) > 1:
             self.combo_sessions.show()
+            self.arrow_label.show()
+            # Positioniere Pfeil rechts in der ComboBox
+            self.arrow_label.move(self.combo_sessions.width() - 28, 0)
         else:
             self.combo_sessions.hide()
+            self.arrow_label.hide()
 
         selected_session = next((s for s in sessions if s['id'] == self.current_session_id), None)
         

@@ -52,9 +52,74 @@ def get_session_app_icon(app_id):
     
     if path and os.path.exists(path):
         provider = QFileIconProvider()
-        return provider.icon(QFileInfo(path))
+        icon = provider.icon(QFileInfo(path))
+        if not icon.isNull():
+            return icon
     
-    return QIcon()
+    # Fallback: Default Music Icon
+    return get_default_music_icon()
+
+
+def get_default_music_icon():
+    """Gibt ein Standard-Musik-Icon zurück"""
+    # Nutze Qt's Standard Media Play Icon als Fallback
+    style = QApplication.style()
+    if style:
+        icon = style.standardIcon(style.StandardPixmap.SP_MediaPlay)
+        if not icon.isNull():
+            return icon
+    
+    # Wenn auch das fehlschlägt, erstelle ein einfaches Icon
+    size = 32
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    
+    # Einfacher Kreis mit Musiknote
+    pen = painter.pen()
+    pen.setColor(Qt.GlobalColor.white)
+    pen.setWidth(2)
+    painter.setPen(pen)
+    painter.setBrush(QBrush(Qt.GlobalColor.transparent))
+    
+    # Äußerer Kreis
+    painter.drawEllipse(4, 4, 24, 24)
+    
+    # Musiknote
+    painter.setBrush(QBrush(Qt.GlobalColor.white))
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.drawEllipse(11, 18, 6, 6)
+    painter.drawRect(16, 10, 2, 9)
+    
+    painter.end()
+    return QIcon(pixmap)
+
+
+def get_dropdown_arrow_icon(color=Qt.GlobalColor.white):
+    """Erstellt ein einfaches Dropdown-Pfeil Icon"""
+    size = 16
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    
+    pen = painter.pen()
+    pen.setColor(color)
+    pen.setWidth(2)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(pen)
+    
+    # Pfeil nach unten zeichnen (V-Form)
+    painter.drawLine(4, 6, 8, 10)
+    painter.drawLine(8, 10, 12, 6)
+    
+    painter.end()
+    return QIcon(pixmap)
+
 
 def get_gear_icon(color=Qt.GlobalColor.white):
     size = 32

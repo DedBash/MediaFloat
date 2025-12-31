@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from version import __version__
 
 a = Analysis(
     ['main.py'],
@@ -43,4 +44,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon='ui/icons/icon.ico',
+    version='version_info.txt',
 )
